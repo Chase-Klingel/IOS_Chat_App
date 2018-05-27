@@ -23,6 +23,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     
     override func viewDidLoad() {
+        print("view did load")
         super.viewDidLoad()
         
         //TODO: Set yourself as the delegate and datasource here:
@@ -43,7 +44,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         messageTableView.register(UINib(nibName: "MessageCell", bundle: nil), forCellReuseIdentifier: "customMessageCell")
         
         configureTableView()
-        
+        retrieveMessages()
     }
 
     ///////////////////////////////////////////
@@ -52,17 +53,16 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "customMessageCell", for: indexPath) as! CustomMessageCell
         
-        let messageArray = ["First Message", "Second Message", "Third Message"]
-        
-        cell.messageBody.text = messageArray[indexPath.row]
-        
+        cell.messageBody.text = messageArray[indexPath.row].messageBody
+        cell.senderUsername.text = messageArray[indexPath.row].sender
+        cell.avatarImageView.image = UIImage(named: "egg")
         return cell
     }
     
     
     //TODO: Declare cellForRowAtIndexPath here:
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 3
+        return messageArray.count
     }
     
     
@@ -115,11 +115,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     
     //MARK: - Send & Recieve from Firebase
-    
-    
-    
-    
-    
     @IBAction func sendPressed(_ sender: AnyObject) {
         
         
@@ -151,7 +146,25 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     //TODO: Create the retrieveMessages method here:
-    
+    func retrieveMessages() {
+        print("retrieving")
+        let messageDB = Database.database().reference().child("Messages")
+        
+        messageDB.observe(.childAdded) { (snapshot) in
+            let snapshotValue = snapshot.value as! Dictionary<String, String>
+            print("snapshot \(snapshot)")
+            let sender = snapshotValue["Sender"]!
+            let text = snapshotValue["MessageBody"]!
+            
+            let message = Message();
+            message.sender = sender;
+            message.messageBody = text;
+            
+            self.messageArray.append(message)
+            self.configureTableView()
+            self.messageTableView.reloadData()
+        }
+    }
     
 
     
